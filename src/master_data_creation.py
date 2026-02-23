@@ -11,12 +11,12 @@ pd.set_option('display.expand_frame_repr', False)
 
 # --- CONFIGURATION ---
 # These names must match the files inside data/raw/
-FILES = {
-    "occupation": "Occupation Data.txt",
-    "tasks": "Task Statements.txt",
-    "alt_titles": "Alternate Titles.txt",
-    "tech_skills": "Technology Skills.txt",
-    "tools": "Tools Used.txt"
+ONET_FILES = {
+    "occupation": RAW_DATA_DIR / "Occupation Data.txt",
+    "tasks_filtered": RAW_DATA_DIR / "Task Ratings filtered.txt",
+    "alt_titles": RAW_DATA_DIR / "Alternate Titles.txt",
+    "tech_skills": RAW_DATA_DIR / "Technology Skills.txt",
+    "tools": RAW_DATA_DIR / "Tools Used.txt"
 }
 
 def load_onet_file(filename, cols_to_keep):
@@ -74,20 +74,28 @@ def make_master_profile(row):
 
 if __name__ == "__main__":
     # 1. Load the "Anchor" File
-    df_main = load_onet_file(FILES["occupation"], ['O*NET-SOC Code', 'Title', 'Description'])
+    df_main = load_onet_file(ONET_FILES["occupation"], ['O*NET-SOC Code', 'Title', 'Description'])
 
     # 2. Load and Flatten Auxiliary Files
-    df_tasks = flatten_data(load_onet_file(FILES["tasks"], ['O*NET-SOC Code', 'Task']), 
-                            'O*NET-SOC Code', 'Task', 'All_Tasks')
+    # df_tasks = flatten_data(load_onet_file(ONET_FILES["tasks_filtered"], ['O*NET-SOC Code', 'Task']), 
+    #                         'O*NET-SOC Code', 'Task', 'All_Tasks')
     
-    df_alts = flatten_data(load_onet_file(FILES["alt_titles"], ['O*NET-SOC Code', 'Alternate Title']), 
+    df_alts = flatten_data(load_onet_file(ONET_FILES["alt_titles"], ['O*NET-SOC Code', 'Alternate Title']), 
                            'O*NET-SOC Code', 'Alternate Title', 'All_Alt_Titles')
     
-    df_tech = flatten_data(load_onet_file(FILES["tech_skills"], ['O*NET-SOC Code', 'Example']), 
+    df_tech = flatten_data(load_onet_file(ONET_FILES["tech_skills"], ['O*NET-SOC Code', 'Example']), 
                            'O*NET-SOC Code', 'Example', 'All_Tech_Skills')
     
-    df_tools = flatten_data(load_onet_file(FILES["tools"], ['O*NET-SOC Code', 'Example']), 
+    df_tools = flatten_data(load_onet_file(ONET_FILES["tools"], ['O*NET-SOC Code', 'Example']), 
                            'O*NET-SOC Code', 'Example', 'All_Tools')
+    
+    df_tasks_raw = load_onet_file(ONET_FILES["tasks_filtered"], ['O*NET-SOC Code', 'Task', 'IMP_rating'])
+
+    if not df_tasks_raw.empty:
+        df_tasks_raw['Task_Text'] = df_tasks_raw['Task'].astype(str) + " [Importance: " + df_tasks_raw['IMP_rating'].astype(str) + "]"
+        df_tasks = flatten_data(df_tasks_raw, 'O*NET-SOC Code', 'Task_Text', 'All_Tasks')
+    else:
+        df_tasks = pd.DataFrame(columns=['O*NET-SOC Code', 'All_Tasks'])
 
     # 3. Merge Everything
     print("Merging all datasets into Knowledge Base...")
