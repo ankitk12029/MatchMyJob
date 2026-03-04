@@ -9,11 +9,13 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.max_colwidth', None)
 pd.set_option('display.expand_frame_repr', False)
 
+
 # --- CONFIGURATION ---
 # These names must match the files inside data/raw/
 ONET_FILES = {
     "occupation": RAW_DATA_DIR / "Occupation Data.txt",
-    "tasks_filtered": RAW_DATA_DIR / "Task Ratings filtered.txt",
+    "tasks_ratings": RAW_DATA_DIR / "Task Ratings.txt",
+    "tasks": RAW_DATA_DIR / "Task Statements.txt",
     "alt_titles": RAW_DATA_DIR / "Alternate Titles.txt",
     "tech_skills": RAW_DATA_DIR / "Technology Skills.txt",
     "tools": RAW_DATA_DIR / "Tools Used.txt"
@@ -77,9 +79,6 @@ if __name__ == "__main__":
     df_main = load_onet_file(ONET_FILES["occupation"], ['O*NET-SOC Code', 'Title', 'Description'])
 
     # 2. Load and Flatten Auxiliary Files
-    # df_tasks = flatten_data(load_onet_file(ONET_FILES["tasks_filtered"], ['O*NET-SOC Code', 'Task']), 
-    #                         'O*NET-SOC Code', 'Task', 'All_Tasks')
-    
     df_alts = flatten_data(load_onet_file(ONET_FILES["alt_titles"], ['O*NET-SOC Code', 'Alternate Title']), 
                            'O*NET-SOC Code', 'Alternate Title', 'All_Alt_Titles')
     
@@ -89,13 +88,51 @@ if __name__ == "__main__":
     df_tools = flatten_data(load_onet_file(ONET_FILES["tools"], ['O*NET-SOC Code', 'Example']), 
                            'O*NET-SOC Code', 'Example', 'All_Tools')
     
-    df_tasks_raw = load_onet_file(ONET_FILES["tasks_filtered"], ['O*NET-SOC Code', 'Task', 'IMP_rating'])
+    # Load BOTH files: The master task list and the un-filtered Task Ratings
+    df_all_tasks = load_onet_file(ONET_FILES["tasks"], ['O*NET-SOC Code', 'Task ID', 'Task'])
+    
+    # Load raw ratings with the specific columns you requested
+    df_ratings_raw = load_onet_file(ONET_FILES["tasks_ratings"], 
+                                    ['O*NET-SOC Code', 'Title', 'Task ID', 'Task', 'Scale ID', 'Data Value'])
 
-    if not df_tasks_raw.empty:
-        df_tasks_raw['Task_Text'] = df_tasks_raw['Task'].astype(str) + " [Importance: " + df_tasks_raw['IMP_rating'].astype(str) + "]"
-        df_tasks = flatten_data(df_tasks_raw, 'O*NET-SOC Code', 'Task_Text', 'All_Tasks')
+    df_ratings = pd.DataFrame()
+    if not df_ratings_raw.empty:
+        # Filter where Scale ID is 'IM' (Importance)
+        df_ratings = df_ratings_raw[df_ratings_raw['Scale ID'] == 'IM'].copy()
+        
+        # Rename 'Data Value' to 'IMP_rating' so it flows perfectly into your existing code
+        df_ratings.rename(columns={'Data Value': 'IMP_rating'}, inplace=True)
+        
+        # Keep only the columns needed for the merge to keep things clean
+        df_ratings = df_ratings[['O*NET-SOC Code', 'Task ID', 'IMP_rating']]
+
+    if not df_all_tasks.empty:
+        # 2. LEFT JOIN: Keep all tasks, attach ratings if they exist
+        if not df_ratings.empty:
+            df_merged_task = pd.merge(df_all_tasks, df_ratings, on=['O*NET-SOC Code', 'Task ID'], how='left')
+        else:
+            # Fallback just in case ratings file is missing
+            df_merged_task = df_all_tasks.copy()
+            df_merged_task['IMP_rating'] = pd.NA
+
+        # Conditionally append the importance rating
+        def format_task(row):
+            rating = row['IMP_rating']
+            # Check if rating is missing (NaN, None, or empty string)
+            if pd.isna(rating) or str(rating).strip() == '' or str(rating).lower() == 'nan':
+                return str(row['Task'])
+            else:
+                # Append the rating, removing any decimal zeros (e.g., '88.0' -> '88')
+                clean_rating = str(rating).replace('.0', '')
+                return f"{row['Task']} [Importance: {clean_rating}]"
+
+        df_merged_task['Task_Text'] = df_merged_task.apply(format_task, axis=1)
+        
+        # Flatten the combined text
+        df_tasks = flatten_data(df_merged_task, 'O*NET-SOC Code', 'Task_Text', 'All_Tasks')
     else:
         df_tasks = pd.DataFrame(columns=['O*NET-SOC Code', 'All_Tasks'])
+
 
     # 3. Merge Everything
     print("Merging all datasets into Knowledge Base...")
