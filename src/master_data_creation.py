@@ -3,6 +3,7 @@ import pandas as pd
 import os
 from pathlib import Path
 from config import RAW_DATA_DIR, PROCESSED_DATA_DIR         # Import the paths we defined in config.py
+import json
 
 # --- PANDAS SETTINGS ---
 pd.set_option('display.max_columns', None)
@@ -61,12 +62,12 @@ def flatten_data(df, group_col, text_col, new_col_name):
 def make_master_profile(row):
     """
     Combines all job features into one searchable text block.
+    (Note: Tasks are now stored separately in 'Structured_Tasks' for vector math).
     """
     parts = [
         f"Job Title: {row.get('Title', '')}",
         f"Description: {row.get('Description', '')}",
         f"Alternate Titles: {row.get('All_Alt_Titles', '')}",
-        f"Tasks: {row.get('All_Tasks', '')}",
         f"Tech Skills: {row.get('All_Tech_Skills', '')}",
         f"Tools: {row.get('All_Tools', '')}",
     ]
@@ -107,33 +108,45 @@ if __name__ == "__main__":
         df_ratings = df_ratings[['O*NET-SOC Code', 'Task ID', 'IMP_rating']]
 
     if not df_all_tasks.empty:
-        # 2. LEFT JOIN: Keep all tasks, attach ratings if they exist
+        # 1. LEFT JOIN: Keep all tasks, attach ratings if they exist
         if not df_ratings.empty:
             df_merged_task = pd.merge(df_all_tasks, df_ratings, on=['O*NET-SOC Code', 'Task ID'], how='left')
         else:
-            # Fallback just in case ratings file is missing
             df_merged_task = df_all_tasks.copy()
             df_merged_task['IMP_rating'] = pd.NA
 
-        # Conditionally append the importance rating
-        def format_task(row):
-            rating = row['IMP_rating']
-            # Check if rating is missing (NaN, None, or empty string)
+        # 2. Calculate the Mathematical Multiplier (0.0 to 1.0)
+        def calculate_weight(rating):
+            # If rating is missing, default to 0.5 (neutral/average importance)
             if pd.isna(rating) or str(rating).strip() == '' or str(rating).lower() == 'nan':
-                return str(row['Task'])
-            else:
-                # Append the rating, removing any decimal zeros (e.g., '88.0' -> '88')
-                clean_rating = str(rating).replace('.0', '')
-                return f"{row['Task']} [Importance: {clean_rating}]"
+                return 0.5
+            try:
+                # O*NET 1-5 scale normalized to 0.0 - 1.0
+                return round((float(rating) - 1) / 4, 2)
+            except ValueError:
+                return 0.5
 
-        df_merged_task['Task_Text'] = df_merged_task.apply(format_task, axis=1)
+        df_merged_task['Math_Weight'] = df_merged_task['IMP_rating'].apply(calculate_weight)
+
+        # 3. Create a dictionary for each task
+        def build_task_dict(row):
+            return {
+                "task": str(row['Task']),
+                "weight": row['Math_Weight']
+            }
+            
+        df_merged_task['Task_Dict'] = df_merged_task.apply(build_task_dict, axis=1)
+
+        # 4. Group by SOC Code and convert the list of dicts into a JSON string
+        print("Structuring Tasks into JSON format for Vector Math...")
+        df_tasks = df_merged_task.groupby('O*NET-SOC Code')['Task_Dict'].apply(
+            lambda x: json.dumps(list(x))
+        ).reset_index()
         
-        # Flatten the combined text
-        df_tasks = flatten_data(df_merged_task, 'O*NET-SOC Code', 'Task_Text', 'All_Tasks')
+        # Rename column so the AI match engine knows where to look
+        df_tasks.rename(columns={'Task_Dict': 'Structured_Tasks'}, inplace=True)
     else:
-        df_tasks = pd.DataFrame(columns=['O*NET-SOC Code', 'All_Tasks'])
-
-
+        df_tasks = pd.DataFrame(columns=['O*NET-SOC Code', 'Structured_Tasks'])
     # 3. Merge Everything
     print("Merging all datasets into Knowledge Base...")
     kb = df_main.merge(df_tasks, on='O*NET-SOC Code', how='left') \
