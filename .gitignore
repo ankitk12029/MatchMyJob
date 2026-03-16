@@ -13,3 +13,4 @@ __pycache__/
 
 archive/ 
 
+data/raw/user_survey_input.csv
