@@ -69,12 +69,19 @@ BGE_QUERY_PREFIX = "Represent this job for retrieval: "
 # WEIGHT_ALT_TITLES  = 0.2707
 # WEIGHT_TOOLS       = 0.0212
 
-WEIGHT_TASKS       = 0.2017
-WEIGHT_DESCRIPTION = 0.1021
-WEIGHT_SKILLS      = 0.0063
-WEIGHT_OFC_TITLE   = 0.3941
-WEIGHT_ALT_TITLES  = 0.2898
-WEIGHT_TOOLS       = 0.0061
+# WEIGHT_TASKS       = 0.2017
+# WEIGHT_DESCRIPTION = 0.1021
+# WEIGHT_SKILLS      = 0.0063
+# WEIGHT_OFC_TITLE   = 0.3941
+# WEIGHT_ALT_TITLES  = 0.2898
+# WEIGHT_TOOLS       = 0.0061
+
+WEIGHT_TASKS       = 0.0051
+WEIGHT_DESCRIPTION = 0.0700
+WEIGHT_SKILLS      = 0.0405
+WEIGHT_OFC_TITLE   = 0.3212
+WEIGHT_ALT_TITLES  = 0.5055
+WEIGHT_TOOLS       = 0.0578
 # Auto-load optimized weights
 _weights_path = Path(__file__).resolve().parent.parent / 'data' / 'processed' / 'optimal_weights.csv'
 if _weights_path.exists():

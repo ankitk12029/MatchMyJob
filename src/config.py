@@ -24,8 +24,8 @@ GT_TEST_SPLIT_S3_PATH    = RAW_DATA_DIR / "ground_truth_test_split_s3.xlsx"     
 
 # ─── Processed / model files ──────────────────────────────────────────────────
 KB_PATH              = PROCESSED_DATA_DIR / "onet_knowledge_base.csv"
-BASE_MODEL_NAME      = "BAAI/bge-base-en-v1.5"   # upgraded from bge-small (33M→109M params)
-# BASE_MODEL_NAME      = "BAAI/bge-small-en-v1.5"  # previous — 43.3% top-1
+# BASE_MODEL_NAME      = "BAAI/bge-base-en-v1.5"   # upgraded from bge-small (33M→109M params)
+BASE_MODEL_NAME      = "BAAI/bge-small-en-v1.5"  # previous — 43.3% top-1
 # BASE_MODEL_NAME      = "all-MiniLM-L6-v2"         # previous — 43% top-1
 # BASE_MODEL_NAME      = "all-mpnet-base-v2"         # OOM on Mac 20GB MPS
 FINETUNED_MODEL_PATH = MODELS_DIR / "matchmyjob-finetuned"
