@@ -3,8 +3,8 @@ data/processed/*
 data/output/*
 data/raw/*
 
-# Ignore model files
-
+# Ignore claude files
+.claude/
 
 # Ignore vector files
 vectors/*
