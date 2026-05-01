@@ -1,10 +1,21 @@
 # Ignore data files
 data/processed/*
 data/output/*
+data/raw/*
+
+# Ignore model files
+
+
+# Ignore vector files
+vectors/*
 
 # Keep the folder structure (git needs at least one file to track a folder)
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+!data/output/.gitkeep
+!models/.gitkeep
+!vectors/.gitkeep
+
 
 # Ignore Python cache
 __pycache__/

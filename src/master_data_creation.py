@@ -59,19 +59,19 @@ def flatten_data(df, group_col, text_col, new_col_name):
     df_flat.rename(columns={text_col: new_col_name}, inplace=True)
     return df_flat
 
-def make_master_profile(row):
-    """
-    Combines all job features into one searchable text block.
-    (Note: Tasks are now stored separately in 'Structured_Tasks' for vector math).
-    """
-    parts = [
-        f"Job Title: {row.get('Title', '')}",
-        f"Description: {row.get('Description', '')}",
-        f"Alternate Titles: {row.get('All_Alt_Titles', '')}",
-        f"Tech Skills: {row.get('All_Tech_Skills', '')}",
-        f"Tools: {row.get('All_Tools', '')}",
-    ]
-    return "\n".join(parts)
+# def make_master_profile(row):
+#     """
+#     Combines all job features into one searchable text block.
+#     (Note: Tasks are now stored separately in 'Structured_Tasks' for vector math).
+#     """
+#     parts = [
+#         f"Job Title: {row.get('Title', '')}",
+#         f"Description: {row.get('Description', '')}",
+#         f"Alternate Titles: {row.get('All_Alt_Titles', '')}",
+#         f"Tech Skills: {row.get('All_Tech_Skills', '')}",
+#         f"Tools: {row.get('All_Tools', '')}",
+#     ]
+#     return "\n".join(parts)
 
 # --- MAIN EXECUTION ---
 
@@ -157,8 +157,8 @@ if __name__ == "__main__":
     kb.fillna("", inplace=True)
 
     # 4. Create Master Profile
-    print("Generating Master Profiles for AI processing...")
-    kb['Master_Profile'] = kb.apply(make_master_profile, axis=1)
+    # print("Generating Master Profiles for AI processing...")
+    # kb['Master_Profile'] = kb.apply(make_master_profile, axis=1)
 
     # 5. Save to Processed folder
     PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
