@@ -44,8 +44,9 @@ pd.set_option('display.max_colwidth', None)
 # ─── CONFIG ───────────────────────────────────────────────────────────────────
 MODEL_NAME       = str(FINETUNED_MODEL_PATH)
 BM25_WEIGHT      = 0.0    # BM25 hurts on this dataset — cosine sim alone is stronger
-# Must match BGE_QUERY_PREFIX used in finetune_model.py — query side only, not KB profiles.
-BGE_QUERY_PREFIX = "Represent this job for retrieval: "
+# Prefix only applies if the model was fine-tuned WITH it (bge-base on Colab).
+# bge-small was trained without prefix — using it at inference hurts −1.1%.
+BGE_QUERY_PREFIX = ""
 
 # Default cosine weights (overridden by optimal_weights.csv if present)
 # WEIGHT_TASKS       = 0.25
@@ -69,19 +70,21 @@ BGE_QUERY_PREFIX = "Represent this job for retrieval: "
 # WEIGHT_ALT_TITLES  = 0.2707
 # WEIGHT_TOOLS       = 0.0212
 
-# WEIGHT_TASKS       = 0.2017
-# WEIGHT_DESCRIPTION = 0.1021
-# WEIGHT_SKILLS      = 0.0063
-# WEIGHT_OFC_TITLE   = 0.3941
-# WEIGHT_ALT_TITLES  = 0.2898
-# WEIGHT_TOOLS       = 0.0061
+WEIGHT_TASKS       = 0.2017
+WEIGHT_DESCRIPTION = 0.1021
+WEIGHT_SKILLS      = 0.0063
+WEIGHT_OFC_TITLE   = 0.3941
+WEIGHT_ALT_TITLES  = 0.2898
+WEIGHT_TOOLS       = 0.0061
 
-WEIGHT_TASKS       = 0.0051
-WEIGHT_DESCRIPTION = 0.0700
-WEIGHT_SKILLS      = 0.0405
-WEIGHT_OFC_TITLE   = 0.3212
-WEIGHT_ALT_TITLES  = 0.5055
-WEIGHT_TOOLS       = 0.0578
+# WEIGHT_TASKS       = 0.0051
+# WEIGHT_DESCRIPTION = 0.0700
+# WEIGHT_SKILLS      = 0.0405
+# WEIGHT_OFC_TITLE   = 0.3212
+# WEIGHT_ALT_TITLES  = 0.5055
+# WEIGHT_TOOLS       = 0.0578
+
+
 # Auto-load optimized weights
 _weights_path = Path(__file__).resolve().parent.parent / 'data' / 'processed' / 'optimal_weights.csv'
 if _weights_path.exists():
@@ -180,12 +183,31 @@ def bm25_scores_for_query(bm25: BM25Okapi, query: str) -> np.ndarray:
 
 # ─── TITLE BOOST ──────────────────────────────────────────────────────────────
 
+_STOP_WORDS = {
+    'and', 'or', 'the', 'of', 'a', 'in', 'for', 'to', 'at', 'by', 'an',
+    'is', 'as', 'on', 'except', 'special', 'all', 'other', 'with', 'from',
+}
+
+def _stem(w: str) -> str:
+    """Strip common English plural/agent suffixes for fuzzy title matching."""
+    if len(w) > 5 and w.endswith('ers'):
+        return w[:-2]   # supervisors → supervisor, workers → worker
+    if len(w) > 3 and w.endswith('s'):
+        return w[:-1]   # analysts → analyst, nurses → nurse
+    return w
+
+def _title_words(title: str) -> set:
+    return {_stem(w) for w in title.lower().split()
+            if w not in _STOP_WORDS and len(w) > 1}
+
 def apply_title_boost(survey_title: str, kb_df: pd.DataFrame,
                       scores: np.ndarray, boost: float = 0.03) -> np.ndarray:
-    survey_words = set(survey_title.lower().split())
+    survey_words = _title_words(survey_title)
+    if not survey_words:
+        return scores
     boosted = scores.copy()
     for idx, kb_title in enumerate(kb_df['Title']):
-        overlap = len(survey_words & set(str(kb_title).lower().split()))
+        overlap = len(survey_words & _title_words(str(kb_title)))
         if overlap >= 1:
             boosted[idx] += boost * overlap
     return boosted
