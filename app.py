@@ -421,15 +421,11 @@ def render_batch_charts(result_df: pd.DataFrame, high: int, mid: int, low: int):
     with row1_l:
         counts, edges = np.histogram(conf, bins=20)
         mids = (edges[:-1] + edges[1:]) / 2
-        bin_colors = [
-            "#059669" if m >= 72 else "#D97706" if m >= 58 else "#DC2626"
-            for m in mids
-        ]
         fig = go.Figure(go.Bar(
             x=mids,
             y=counts,
             width=(edges[1] - edges[0]) * 0.85,
-            marker=dict(color=bin_colors, line=dict(width=0)),
+            marker=dict(color="#A6192E", line=dict(width=0)),
             hovertemplate="~%{x:.0f}% confidence<br>Count: %{y}<extra></extra>",
         ))
         fig.update_layout(
@@ -725,10 +721,11 @@ with tab_upload:
             m2.metric("Avg confidence",       f"{conf_vals.mean():.1f}%")
             m3.metric("High confidence ≥72%", f"{high:,}")
             m4.metric("Low confidence <58%",  f"{low:,}")
-
-            st.markdown("<div class='section-header' style='margin-top:16px'>Results</div>",
+            with st.expander("Preview first 10 rows"):
+                st.dataframe(result_df.head(10), use_container_width=True)
+                st.markdown("<div class='section-header' style='margin-top:16px'>Results</div>",
                         unsafe_allow_html=True)
-            render_results_table(result_df, title_col, desc_col)
+            # render_results_table(result_df, title_col, desc_col)
             render_batch_charts(result_df, high, mid, low)
 
             st.download_button(
