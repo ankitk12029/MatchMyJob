@@ -3,6 +3,7 @@ app.py — MatchMyJob Interactive Web App
 """
 
 import os
+import time
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -323,8 +324,8 @@ def conf_color(v):
     return "conf-low"
 
 def conf_label(v):
-    if v >= 72: return "High confidence"
-    if v >= 58: return "Moderate confidence"
+    if v >= 65: return "High confidence"
+    if v >= 50: return "Moderate confidence"
     return "Low confidence"
 
 def soc_group(soc: str) -> str:
@@ -707,25 +708,28 @@ with tab_upload:
             descs  = df[desc_col].tolist() if desc_col != "(none — title only)" else [""] * len(df)
 
             with st.spinner(f"Matching {len(df):,} rows against 1,016 occupations…"):
+                _t0       = time.perf_counter()
                 matches   = match_batch(titles, descs)
+                _elapsed  = time.perf_counter() - _t0
                 result_df = pd.concat([df.reset_index(drop=True), pd.DataFrame(matches)], axis=1)
 
             conf_vals = pd.DataFrame(matches)["Confidence_%"]
-            high = int((conf_vals >= 72).sum())
-            mid  = int(((conf_vals >= 58) & (conf_vals < 72)).sum())
-            low  = int((conf_vals < 58).sum())
+            high = int((conf_vals >= 65).sum())
+            mid  = int(((conf_vals >= 50) & (conf_vals < 65)).sum())
+            low  = int((conf_vals < 50).sum())
 
             st.markdown("<div class='section-header'>Summary</div>", unsafe_allow_html=True)
-            m1, m2, m3, m4 = st.columns(4)
+            m1, m2, m3, m4, m5 = st.columns(5)
             m1.metric("Total matched",        f"{len(result_df):,}")
             m2.metric("Avg confidence",       f"{conf_vals.mean():.1f}%")
-            m3.metric("High confidence ≥72%", f"{high:,}")
-            m4.metric("Low confidence <58%",  f"{low:,}")
-            with st.expander("Preview first 10 rows"):
-                st.dataframe(result_df.head(10), use_container_width=True)
-                st.markdown("<div class='section-header' style='margin-top:16px'>Results</div>",
-                        unsafe_allow_html=True)
-            # render_results_table(result_df, title_col, desc_col)
+            m3.metric("High confidence ≥65%", f"{high:,}")
+            m4.metric("Low confidence <50%",  f"{low:,}")
+            m5.metric("Processing time",      f"{_elapsed:.2f}s")
+            # with st.expander("Preview first 10 rows"):
+            #     st.dataframe(result_df.head(10), use_container_width=True)
+            #     st.markdown("<div class='section-header' style='margin-top:16px'>Results</div>",
+            #             unsafe_allow_html=True)
+            render_results_table(result_df, title_col, desc_col)
             render_batch_charts(result_df, high, mid, low)
 
             st.download_button(
@@ -781,8 +785,11 @@ with tab_single:
             st.warning("Please enter a job title.")
         else:
             with st.spinner("Searching 1,016 occupations…"):
-                result = match_batch([s_title], [s_desc])[0]
+                _t0     = time.perf_counter()
+                result  = match_batch([s_title], [s_desc])[0]
+                _elapsed = time.perf_counter() - _t0
 
+            st.caption(f"Matched in {_elapsed:.2f}s")
             st.markdown("<div class='section-header' style='margin-top:8px'>Top matches</div>",
                         unsafe_allow_html=True)
             render_match_card(1, result["Matched_SOC_Code"], result["Matched_Title"], result["Confidence_%"])
