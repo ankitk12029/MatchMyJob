@@ -1,5 +1,5 @@
 # Ignore data files
-data/processed/*
+# data/processed/*
 data/output/*
 data/raw/*
 
@@ -11,7 +11,7 @@ vectors/*
 
 # Keep the folder structure (git needs at least one file to track a folder)
 !data/raw/.gitkeep
-!data/processed/.gitkeep
+# !data/processed/.gitkeep
 !data/output/.gitkeep
 !models/.gitkeep
 !vectors/.gitkeep
@@ -25,3 +25,4 @@ __pycache__/
 archive/ 
 
 .vscode/
+ 
