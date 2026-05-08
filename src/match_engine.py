@@ -34,12 +34,20 @@ pd.set_option('display.expand_frame_repr', False)
 MODEL_NAME = str(FINETUNED_MODEL_PATH)   # switch to 'all-MiniLM-L6-v2' for baseline
 
 # ─── CATEGORY WEIGHTS (must add up to 1.0) ────────────────────────────────────
-WEIGHT_TASKS       = 0.45   # Structured Tasks (importance-weighted)
-WEIGHT_DESCRIPTION = 0.20   # Official O*NET description
-WEIGHT_SKILLS      = 0.15   # Technology Skills
-WEIGHT_OFC_TITLE   = 0.10   # Official O*NET title
-WEIGHT_ALT_TITLES  = 0.05   # Alternate Titles
-WEIGHT_TOOLS       = 0.05   # Tools Used
+# WEIGHT_TASKS       = 0.45   
+# WEIGHT_DESCRIPTION = 0.20   # Official O*NET description
+# WEIGHT_SKILLS      = 0.15   # Technology Skills
+# WEIGHT_OFC_TITLE   = 0.10   # Official O*NET title
+# WEIGHT_ALT_TITLES  = 0.05   # Alternate Titles
+# WEIGHT_TOOLS       = 0.05   # Tools Used
+
+
+WEIGHT_TASKS       = 0.2017   # Structured Tasks (importance-weighted)
+WEIGHT_DESCRIPTION = 0.1021   # Official O*NET description
+WEIGHT_SKILLS      = 0.0063   # Technology Skills
+WEIGHT_OFC_TITLE   = 0.3941   # Official O*NET title
+WEIGHT_ALT_TITLES  = 0.2898   # Alternate Titles
+WEIGHT_TOOLS       = 0.0061   # Tools Used
 
 INPUT_PATH  = USER_INPUT_FILE
 OUTPUT_PATH = MATCH_OUTPUT_PATH
