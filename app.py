@@ -310,8 +310,10 @@ def match_batch(titles: list, descriptions: list) -> list:
             "Confidence_%"     : round(float(raw[i][b]) * 100, 1),
             "Top2_SOC"         : kb_df.iloc[top3[1]]["O*NET-SOC Code"],
             "Top2_Title"       : kb_df.iloc[top3[1]]["Title"],
+            "Top2_Confidence"  : round(float(s[top3[1]]) * 100, 1),
             "Top3_SOC"         : kb_df.iloc[top3[2]]["O*NET-SOC Code"],
             "Top3_Title"       : kb_df.iloc[top3[2]]["Title"],
+            "Top3_Confidence"  : round(float(s[top3[2]]) * 100, 1),
         })
     return results
 
@@ -796,9 +798,9 @@ with tab_single:
 
             alt_col1, alt_col2 = st.columns(2)
             with alt_col1:
-                render_match_card(2, result["Top2_SOC"], result["Top2_Title"], 0.0)
+                render_match_card(2, result["Top2_SOC"], result["Top2_Title"], result["Top2_Confidence"])
             with alt_col2:
-                render_match_card(3, result["Top3_SOC"], result["Top3_Title"], 0.0)
+                render_match_card(3, result["Top3_SOC"], result["Top3_Title"], result["Top3_Confidence"])
 
             render_single_chart(result, s_title)
     else:
