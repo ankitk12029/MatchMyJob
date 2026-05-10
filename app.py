@@ -417,10 +417,10 @@ def render_results_table(result_df: pd.DataFrame, title_col: str, desc_col: str)
           <th style="color:#6B7280;font-weight:500;font-size:0.75rem;text-align:left;padding:10px 8px;border-bottom:1px solid #E5E7EB">Job Title</th>
           {desc_header}
           <th style="color:#6B7280;font-weight:500;font-size:0.75rem;text-align:left;padding:10px 8px;border-bottom:1px solid #E5E7EB">SOC Code</th>
-          <th style="color:#6B7280;font-weight:500;font-size:0.75rem;text-align:left;padding:10px 8px;border-bottom:1px solid #E5E7EB">Matched Occupation</th>
+          <th style="color:#6B7280;font-weight:500;font-size:0.75rem;text-align:left;padding:10px 8px;border-bottom:1px solid #E5E7EB">Top Matched Occupation</th>
           <th style="color:#6B7280;font-weight:500;font-size:0.75rem;text-align:left;padding:10px 8px;border-bottom:1px solid #E5E7EB">Confidence</th>
-          <th style="color:#6B7280;font-weight:500;font-size:0.75rem;text-align:left;padding:10px 8px;border-bottom:1px solid #E5E7EB">2nd Choice</th>
-          <th style="color:#6B7280;font-weight:500;font-size:0.75rem;text-align:left;padding:10px 8px;border-bottom:1px solid #E5E7EB">3rd Choice</th>
+          <th style="color:#6B7280;font-weight:500;font-size:0.75rem;text-align:left;padding:10px 8px;border-bottom:1px solid #E5E7EB">2nd Choice Occupation</th>
+          <th style="color:#6B7280;font-weight:500;font-size:0.75rem;text-align:left;padding:10px 8px;border-bottom:1px solid #E5E7EB">3rd Choice Occupation</th>
         </tr>
       </thead>
       <tbody>{rows_html}</tbody>
@@ -882,3 +882,27 @@ with tab_single:
           </div>
         </div>
         """, unsafe_allow_html=True)
+
+# ── Footer ────────────────────────────────────────────────────────────────────
+st.markdown("""
+<div style="margin-top:56px;padding:20px 0 16px;border-top:1px solid #E5E7EB;
+            display:flex;justify-content:space-between;align-items:center;
+            flex-wrap:wrap;gap:8px">
+  <div style="font-size:0.75rem;color:#9CA3AF">
+    <span style="font-weight:600;color:#6B7280">MatchMyJob</span>
+    &nbsp;<span style="color:#E5E7EB">|</span>&nbsp;
+    <span>v1.0.0</span>
+  </div>
+  <div style="font-size:0.75rem;color:#9CA3AF">
+    Powered by
+    <a href="https://www.onetonline.org/" target="_blank"
+       style="color:#A6192E;text-decoration:none;font-weight:500">O*NET Online</a>
+    &nbsp;&amp;&nbsp;
+    <a href="https://huggingface.co/BAAI/bge-small-en-v1.5" target="_blank"
+       style="color:#A6192E;text-decoration:none;font-weight:500">BGE Embeddings</a>
+  </div>
+  <div style="font-size:0.75rem;color:#9CA3AF">
+    © 2026 Ankit Katre
+  </div>
+</div>
+""", unsafe_allow_html=True)
