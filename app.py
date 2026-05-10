@@ -80,6 +80,11 @@ html, body, [class*="css"] {
     padding: 20px 24px;
     text-align: center;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    height: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 .stat-number {
     font-size: 2rem;
@@ -95,6 +100,7 @@ html, body, [class*="css"] {
     text-transform: uppercase;
     letter-spacing: 0.07em;
     font-weight: 500;
+    line-height: 1.3;
 }
 
 /* ── Upload zone ── */
@@ -161,6 +167,27 @@ html, body, [class*="css"] {
 .conf-label    { font-size: 0.75rem; color: #6B7280; }
 .occ-title     { font-size: 1rem; font-weight: 600; color: #1A1A1A; margin: 8px 0 4px; }
 .alt-title     { font-size: 0.875rem; font-weight: 500; color: #374151; margin: 4px 0; }
+
+/* ── Tooltip ── */
+[data-testid="stSidebar"] { overflow: visible !important; }
+[data-testid="stSidebar"] > div { overflow: visible !important; }
+.has-tip { position: relative; display: inline-block; cursor: default; }
+.has-tip .tip {
+    visibility: hidden; opacity: 0;
+    background: #FFFFFF; color: #374151 !important;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+    font-size: 0.72rem; font-weight: 400; line-height: 1.45;
+    border-radius: 6px; padding: 7px 10px;
+    width: 200px; text-align: left;
+    position: absolute; top: calc(100% + 6px); left: 0;
+    transform: none;
+    transition: opacity 0.15s;
+    z-index: 9999; pointer-events: none;
+    white-space: normal;
+}
+.has-tip:hover .tip { visibility: visible; opacity: 1; }
+.tip-icon { font-size: 0.7rem; color: #9CA3AF; margin-left: 3px; vertical-align: middle; }
 
 /* ── Section header ── */
 .section-header {
@@ -596,13 +623,21 @@ with st.sidebar:
     st.markdown(f"<span class='sb-badge'>{badge_text}</span>", unsafe_allow_html=True)
 
     st.markdown("<div class='section-header'>Accuracy</div>", unsafe_allow_html=True)
-    for label, val, pct in [
-        ("Top-1 match", "43%", 43),
-        ("Top-3 match", "62%", 62),
-        ("KB size", "1,016 occupations", 100),
+    for label, val, pct, tip in [
+        ("Top-1 match", "43%", 43,
+         "The model picks the exact right occupation as its #1 suggestion 43% of the time."),
+        ("Top-3 match", "62%", 62,
+         "The correct occupation appears somewhere in the top 3 suggestions 62% of the time."),
+        ("N size", "1,016 occupations", 100,
+         "Total number of standardized O*NET occupations the model searches through."),
     ]:
         st.markdown(f"""
-        <div class='sb-stat'><span>{label}</span><span class='sb-stat-val'>{val}</span></div>
+        <div class='sb-stat'>
+          <span class='has-tip'>{label} <span class='tip-icon'>ⓘ</span>
+            <div class='tip'>{tip}</div>
+          </span>
+          <span class='sb-stat-val'>{val}</span>
+        </div>
         <div class='sb-pbar-wrap'><div class='sb-pbar' style='width:{pct}%'></div></div>
         """, unsafe_allow_html=True)
 
@@ -640,20 +675,52 @@ st.markdown(
 
 # Hero stat cards
 c1, c2, c3, c4 = st.columns(4)
-for col, num, label in [
-    (c1, "1,016", "O*NET Occupations"),
-    (c2, "43%",   "Top-1 Accuracy"),
-    (c3, "62%",   "Top-3 Accuracy"),
-    (c4, "600×",  "Faster than Manual"),
-]:
+_hero_tips = [
+    "The total number of standardized job categories from the U.S. O*NET database that the app can match your job title to.",
+    "Out of every 100 jobs matched, the top suggested occupation is correct 43 times. This is called Top-1 Accuracy.",
+    "Out of every 100 jobs matched, the correct occupation appears somewhere in the top 3 suggestions 62 times. This is called Top-3 Accuracy.",
+    "Compared to looking up each job title by hand, the app processes them ~600 times faster.",
+]
+for col, num, label, tip in zip(
+    [c1, c2, c3, c4],
+    ["1,016", "43%", "62%", "600×"],
+    ["O*NET Occupations", "Top Matched Occupation's Accuracy", "Top Three Matched Occupations' Accuracy", "Faster than Manual"],
+    _hero_tips,
+):
     col.markdown(f"""
     <div class="stat-card">
       <div class="stat-number">{num}</div>
-      <div class="stat-label">{label}</div>
+      <div class="stat-label has-tip">{label} <span class="tip-icon">ⓘ</span>
+        <div class="tip">{tip}</div>
+      </div>
     </div>
     """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
+
+# ── How it works ──────────────────────────────────────────────────────────────
+with st.expander("How does this app work?"):
+    st.markdown("""
+    <div style="font-size:0.875rem;color:#374151;line-height:1.7">
+      <b style="color:#A6192E">MatchMyJob</b> takes a plain-English job title (and optionally a description)
+      and automatically finds the best matching occupation from the U.S.
+      <a href="https://www.onetonline.org/" target="_blank" style="color:#A6192E">O*NET database</a> —
+      a government-maintained list of 1,016 standardized job categories.
+      <br><br>
+      <b>Step-by-step:</b>
+      <ol style="margin:8px 0 0 18px;padding:0">
+        <li><b>You provide a job title</b> — either type one in, or upload a spreadsheet with many.</li>
+        <li><b>The AI reads it</b> — a fine-tuned language model converts your text into numbers that capture its meaning.</li>
+        <li><b>It searches 1,016 occupations</b> — comparing your job to every O*NET occupation and ranking the closest matches.</li>
+        <li><b>You get results instantly</b> — the top match plus two runner-ups, each with a confidence score showing how certain the model is.</li>
+      </ol>
+      <br>
+      <b>Confidence score</b> — a percentage showing how similar your job is to the matched occupation.
+      Higher is more certain: <span style="color:#059669;font-weight:600">≥65% High</span> ·
+      <span style="color:#D97706;font-weight:600">50–64% Moderate</span> ·
+      <span style="color:#DC2626;font-weight:600">&lt;50% Low</span>.
+    </div>
+    """, unsafe_allow_html=True)
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
 tab_upload, tab_single = st.tabs(["Upload File", "Try Single Example"])
@@ -721,12 +788,15 @@ with tab_upload:
             low  = int((conf_vals < 50).sum())
 
             st.markdown("<div class='section-header'>Summary</div>", unsafe_allow_html=True)
-            m1, m2, m3, m4, m5 = st.columns(5)
-            m1.metric("Total matched",        f"{len(result_df):,}")
-            m2.metric("Avg confidence",       f"{conf_vals.mean():.1f}%")
-            m3.metric("High confidence ≥65%", f"{high:,}")
-            m4.metric("Low confidence <50%",  f"{low:,}")
-            m5.metric("Processing time",      f"{_elapsed:.2f}s")
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Total matched",       f"{len(result_df):,}",
+                      help="Number of job titles that were successfully matched to an O*NET occupation.")
+            m2.metric("Avg confidence",      f"{conf_vals.mean():.1f}%",
+                      help="Average confidence score across all matches. Higher means the model is more certain about its suggestions.")
+            m3.metric("Low confidence <50%", f"{low:,}",
+                      help="Jobs where the model is less than 50% confident. These matches may need a manual review.")
+            m4.metric("Processing time",     f"{_elapsed:.2f}s",
+                      help="Total time taken to match all rows in your file.")
             # with st.expander("Preview first 10 rows"):
             #     st.dataframe(result_df.head(10), use_container_width=True)
             #     st.markdown("<div class='section-header' style='margin-top:16px'>Results</div>",
