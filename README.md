@@ -107,4 +107,4 @@ matchmyjob/
 
 ## License
 
-© 2025 Ankit Katre. All rights reserved.
+© 2026 Ankit Katre. All rights reserved.
