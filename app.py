@@ -606,40 +606,40 @@ def render_single_chart(result: dict, input_title: str):
 
 # ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 
-with st.sidebar:
-    st.markdown("<h1 style='font-size:1.75rem;font-weight:700;color:#A6192E;margin-bottom:4px'>MatchMyJob</h1>", unsafe_allow_html=True)
-    st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+# with st.sidebar:
+#     st.markdown("<h1 style='font-size:1.75rem;font-weight:700;color:#A6192E;margin-bottom:4px'>MatchMyJob</h1>", unsafe_allow_html=True)
+#     st.markdown("<hr class='divider'>", unsafe_allow_html=True)
 
-    _, model_path = load_model()
-    is_finetuned  = MODEL_DIR.exists()
-    model_label   = "Fine-tuned bge-small" if is_finetuned else "bge-small-en-v1.5"
-    badge_text    = "Fine-tuned" if is_finetuned else "Base model"
+#     _, model_path = load_model()
+#     is_finetuned  = MODEL_DIR.exists()
+#     model_label   = "Fine-tuned bge-small" if is_finetuned else "bge-small-en-v1.5"
+#     badge_text    = "Fine-tuned" if is_finetuned else "Base model"
 
-    st.markdown("<div class='section-header'>Model</div>", unsafe_allow_html=True)
-    st.markdown(
-        f"<div style='color:#374151;font-size:0.875rem;margin-bottom:6px'>{model_label}</div>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(f"<span class='sb-badge'>{badge_text}</span>", unsafe_allow_html=True)
+#     st.markdown("<div class='section-header'>Model</div>", unsafe_allow_html=True)
+#     st.markdown(
+#         f"<div style='color:#374151;font-size:0.875rem;margin-bottom:6px'>{model_label}</div>",
+#         unsafe_allow_html=True,
+#     )
+#     st.markdown(f"<span class='sb-badge'>{badge_text}</span>", unsafe_allow_html=True)
 
-    st.markdown("<div class='section-header'>Accuracy</div>", unsafe_allow_html=True)
-    for label, val, pct, tip in [
-        ("Top-1 match", "43%", 43,
-         "The model picks the exact right occupation as its #1 suggestion 43% of the time."),
-        ("Top-3 match", "62%", 62,
-         "The correct occupation appears somewhere in the top 3 suggestions 62% of the time."),
-        ("N size", "1,016 occupations", 100,
-         "Total number of standardized O*NET occupations the model searches through."),
-    ]:
-        st.markdown(f"""
-        <div class='sb-stat'>
-          <span class='has-tip'>{label} <span class='tip-icon'>ⓘ</span>
-            <div class='tip'>{tip}</div>
-          </span>
-          <span class='sb-stat-val'>{val}</span>
-        </div>
-        <div class='sb-pbar-wrap'><div class='sb-pbar' style='width:{pct}%'></div></div>
-        """, unsafe_allow_html=True)
+    # st.markdown("<div class='section-header'>Accuracy</div>", unsafe_allow_html=True)
+    # for label, val, pct, tip in [
+    #     ("Top-1 match", "43%", 43,
+    #      "The model picks the exact right occupation as its #1 suggestion 43% of the time."),
+    #     ("Top-3 match", "62%", 62,
+    #      "The correct occupation appears somewhere in the top 3 suggestions 62% of the time."),
+    #     ("N size", "1,016 occupations", 100,
+    #      "Total number of standardized O*NET occupations the model searches through."),
+    # ]:
+    #     st.markdown(f"""
+    #     <div class='sb-stat'>
+    #       <span class='has-tip'>{label} <span class='tip-icon'>ⓘ</span>
+    #         <div class='tip'>{tip}</div>
+    #       </span>
+    #       <span class='sb-stat-val'>{val}</span>
+    #     </div>
+    #     <div class='sb-pbar-wrap'><div class='sb-pbar' style='width:{pct}%'></div></div>
+    #     """, unsafe_allow_html=True)
 
     # st.markdown("<hr class='divider'>", unsafe_allow_html=True)
     # st.markdown("<div class='section-header'>Accepted column names</div>", unsafe_allow_html=True)
@@ -657,46 +657,48 @@ with st.sidebar:
     # <div style='color:#6B7280;font-size:0.75rem;font-style:italic'>Any names work — you'll map them.</div>
     # """, unsafe_allow_html=True)
 
-    st.markdown("<hr class='divider'>", unsafe_allow_html=True)
-    st.markdown(
-        "<div style='color:#9CA3AF;font-size:0.75rem'>SDSU · MIS 790<br>Ankit Katre</div>",
-        unsafe_allow_html=True,
-    )
+    # st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+    # st.markdown(
+    #     "<div style='color:#9CA3AF;font-size:0.75rem'>Ankit Katre</div>",
+    #     unsafe_allow_html=True,
+    # )
 
 
 # ─── MAIN AREA ────────────────────────────────────────────────────────────────
 
-st.markdown("<h1 style='font-size:2.5rem;font-weight:700;color:#A6192E;margin-bottom:4px'>O*NET Occupation Mapper</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='font-size:2.5rem;font-weight:700;color:#A6192E;margin-bottom:4px'>MatchMyJob: Free O*NET Occupation/SOC Code Mapper</h1>", unsafe_allow_html=True)
 st.markdown(
-    "<div style='color:#6B7280;margin-bottom:24px;font-size:0.875rem'>"
-    "Map free-text job titles and descriptions to standardized SOC codes automatically.</div>",
+    "<div style='color:#6B7280;margin-bottom:24px;font-size:0.875rem;line-height:1.6'>"
+    "MatchMyJob maps given job titles and job descriptions to O*NET/SOC codes automatically, freely, and at scale. "
+    "MatchMyJob's AI model was trained on real survey job response data and human O*NET match decisions from "
+    "peer-reviewed, published studies and is highly accurate and efficient.</div>",
     unsafe_allow_html=True,
 )
 
 # Hero stat cards
-c1, c2, c3, c4 = st.columns(4)
-_hero_tips = [
-    "The total number of standardized job categories from the U.S. O*NET database that the app can match your job title to.",
-    "Out of every 100 jobs matched, the top suggested occupation is correct 43 times. This is called Top-1 Accuracy.",
-    "Out of every 100 jobs matched, the correct occupation appears somewhere in the top 3 suggestions 62 times. This is called Top-3 Accuracy.",
-    "Compared to looking up each job title by hand, the app processes them ~600 times faster.",
-]
-for col, num, label, tip in zip(
-    [c1, c2, c3, c4],
-    ["1,016", "43%", "62%", "600×"],
-    ["O*NET Occupations", "Top Matched Occupation's Accuracy", "Top Three Matched Occupations' Accuracy", "Faster than Manual"],
-    _hero_tips,
-):
-    col.markdown(f"""
-    <div class="stat-card">
-      <div class="stat-number">{num}</div>
-      <div class="stat-label has-tip">{label} <span class="tip-icon">ⓘ</span>
-        <div class="tip">{tip}</div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+# c1, c2, c3, c4 = st.columns(4)
+# _hero_tips = [
+#     "The total number of standardized job categories from the U.S. O*NET database that the app can match your job title to.",
+#     "Out of every 100 jobs matched, the top suggested occupation is correct 43 times. This is called Top-1 Accuracy.",
+#     "Out of every 100 jobs matched, the correct occupation appears somewhere in the top 3 suggestions 62 times. This is called Top-3 Accuracy.",
+#     "Compared to looking up each job title by hand, the app processes them ~600 times faster.",
+# ]
+# for col, num, label, tip in zip(
+#     [c1, c2, c3, c4],
+#     ["1,016", "43%", "62%", "600×"],
+#     ["O*NET Occupations", "Top Matched Occupation's Accuracy", "Top Three Matched Occupations' Accuracy", "Faster than Manual"],
+#     _hero_tips,
+# ):
+#     col.markdown(f"""
+#     <div class="stat-card">
+#       <div class="stat-number">{num}</div>
+#       <div class="stat-label has-tip">{label} <span class="tip-icon">ⓘ</span>
+#         <div class="tip">{tip}</div>
+#       </div>
+#     </div>
+#     """, unsafe_allow_html=True)
 
-st.markdown("<br>", unsafe_allow_html=True)
+# st.markdown("<br>", unsafe_allow_html=True)
 
 # ── How it works ──────────────────────────────────────────────────────────────
 with st.expander("How does this app work?"):
@@ -723,13 +725,13 @@ with st.expander("How does this app work?"):
     """, unsafe_allow_html=True)
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-tab_upload, tab_single = st.tabs(["Upload File", "Try Single Example"])
+tab_upload, tab_single = st.tabs(["Upload File", "Try a Single Example"])
 
 
 # ── Tab 1: Upload File ────────────────────────────────────────────────────────
 with tab_upload:
     uploaded = st.file_uploader(
-        "Drop CSV or Excel here, or click to browse",
+        "Drop a CSV or Excel file here, or click to browse",
         type=["csv", "xlsx", "xls"],
         label_visibility="collapsed",
     )
@@ -882,6 +884,21 @@ with tab_single:
           </div>
         </div>
         """, unsafe_allow_html=True)
+
+# ── Citation ──────────────────────────────────────────────────────────────────
+st.markdown("""
+<div style="margin-top:40px;padding:16px 20px;background:#FFFFFF;border:1px solid #E5E7EB;
+            border-radius:8px;font-size:0.78rem;color:#6B7280;line-height:1.7">
+  <span style="font-weight:600;color:#374151;text-transform:uppercase;
+               letter-spacing:0.06em;font-size:0.7rem">How to cite</span><br>
+  Katre, A. C., Wiegand J. P. (2026). <em>MatchMyJob: An NLP pipeline for automated O*NET-SOC coding
+  of survey employment data</em> (Version 1.0.0). OSF.
+  <a href="https://doi.org/10.17605/OSF.IO/AZB6U" target="_blank"
+     style="color:#A6192E;text-decoration:none;font-weight:500">
+    https://doi.org/10.17605/OSF.IO/AZB6U
+  </a>
+</div>
+""", unsafe_allow_html=True)
 
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("""
