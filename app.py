@@ -334,7 +334,7 @@ def match_batch(titles: list, descriptions: list) -> list:
         results.append({
             "Matched_SOC_Code" : kb_df.iloc[b]["O*NET-SOC Code"],
             "Matched_Title"    : kb_df.iloc[b]["Title"],
-            "Confidence_%"     : round(float(raw[i][b]) * 100, 1),
+            "Confidence_%"     : round(float(s[b]) * 100, 1),
             "Top2_SOC"         : kb_df.iloc[top3[1]]["O*NET-SOC Code"],
             "Top2_Title"       : kb_df.iloc[top3[1]]["Title"],
             "Top2_Confidence"  : round(float(s[top3[1]]) * 100, 1),
@@ -670,8 +670,7 @@ st.markdown("<h1 style='font-size:2.5rem;font-weight:700;color:#A6192E;margin-bo
 st.markdown(
     "<div style='color:#6B7280;margin-bottom:24px;font-size:0.875rem;line-height:1.6'>"
     "MatchMyJob maps given job titles and job descriptions to O*NET/SOC codes automatically, freely, and at scale. "
-    "MatchMyJob's AI model was trained on real survey job response data and human O*NET match decisions from "
-    "peer-reviewed, published studies and is highly accurate and efficient.</div>",
+    "MatchMyJob's AI model was trained on real job title/description data reported in surveys and human O*NET match decisions used in peer-reviewed, published studies, enabling it to produce highly accurate results for the same purposes.</div>",
     unsafe_allow_html=True,
 )
 
@@ -704,10 +703,7 @@ st.markdown(
 with st.expander("How does this app work?"):
     st.markdown("""
     <div style="font-size:0.875rem;color:#374151;line-height:1.7">
-      <b style="color:#A6192E">MatchMyJob</b> takes a plain-English job title (and optionally a description)
-      and automatically finds the best matching occupation from the U.S.
-      <a href="https://www.onetonline.org/" target="_blank" style="color:#A6192E">O*NET database</a> —
-      a government-maintained list of 1,016 standardized job categories.
+      MatchMyJob takes a given job title—and, optionally, a brief description of the job—and automatically finds the best-matching occupation from the U.S. <a href="https://www.onetonline.org/" target="_blank" style="color:#A6192E">O*NET database</a>, a government-maintained taxonomy of occupations and occupational information. MatchMyJob's AI model was trained on real job title/description data reported in surveys and human O*NET match decisions used in peer-reviewed, published studies, enabling it to produce highly accurate results for the same purposes.
       <br><br>
       <b>Step-by-step:</b>
       <ol style="margin:8px 0 0 18px;padding:0">

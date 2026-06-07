@@ -43,10 +43,10 @@ pd.set_option('display.max_colwidth', None)
 
 # ─── CONFIG ───────────────────────────────────────────────────────────────────
 MODEL_NAME       = str(FINETUNED_MODEL_PATH)
-BM25_WEIGHT      = 0.0    # BM25 hurts on this dataset — cosine sim alone is stronger
+BM25_WEIGHT      = 0.03   # light BM25 hybrid — keyword tie-breaker for close matches
 # Prefix only applies if the model was fine-tuned WITH it (bge-base on Colab).
 # bge-small was trained without prefix — using it at inference hurts −1.1%.
-BGE_QUERY_PREFIX = ""
+BGE_QUERY_PREFIX = "Represent this job for retrieval: "
 
 # Default cosine weights (overridden by optimal_weights.csv if present)
 # WEIGHT_TASKS       = 0.25
@@ -240,13 +240,13 @@ def run_matching(model, bm25: BM25Okapi, bundle: dict,
         final_s = cosine_scores[i] + BM25_WEIGHT * bm25_s
 
         # Stage 3: title word boost
-        final_s = apply_title_boost(survey_titles[i], kb_df, final_s)
+        final_s = apply_title_boost(survey_titles[i], kb_df, final_s, boost=0.05)
 
         top3_idx = np.argsort(final_s)[::-1][:3].tolist()
         top3_socs_list.append([kb_df.iloc[idx]['O*NET-SOC Code'] for idx in top3_idx])
 
         best_idx   = top3_idx[0]
-        confidence = round(float(cosine_scores[i][best_idx]) * 100, 2)
+        confidence = round(float(final_s[best_idx]) * 100, 2)
         soc_codes.append(kb_df.iloc[best_idx]['O*NET-SOC Code'])
         titles.append(kb_df.iloc[best_idx]['Title'])
         confidences.append(confidence)
