@@ -799,16 +799,44 @@ with tab_upload:
             #     st.dataframe(result_df.head(10), use_container_width=True)
             #     st.markdown("<div class='section-header' style='margin-top:16px'>Results</div>",
             #             unsafe_allow_html=True)
-            render_results_table(result_df, title_col, desc_col)
+            csv_data = result_df.to_csv(index=False).encode("utf-8")
+
+            # ── Download bar — visible above charts ───────────────────────────
+            st.markdown("""
+            <style>
+            div[data-testid="stDownloadButton"] > button {
+                background-color: #A6192E !important;
+                color: white !important;
+                font-weight: 600 !important;
+                font-size: 1rem !important;
+                padding: 14px 24px !important;
+                border: none !important;
+                border-radius: 8px !important;
+                width: 100% !important;
+            }
+            div[data-testid="stDownloadButton"] > button:hover {
+                background-color: #8B1525 !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            dl_col, spacer = st.columns([1, 3])
+            with dl_col:
+                st.download_button(
+                    label="⬇ Download results as CSV",
+                    data=csv_data,
+                    file_name="matchmyjob_results.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
+
             render_batch_charts(result_df, high, mid, low)
 
-            st.download_button(
-                label="Download full results as CSV",
-                data=result_df.to_csv(index=False).encode("utf-8"),
-                file_name="matchmyjob_results.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
+            preview_n = min(20, len(result_df))
+            with st.expander(f"View results table — first {preview_n} of {len(result_df):,} rows", expanded=False):
+                render_results_table(result_df.head(preview_n), title_col, desc_col)
+            if len(result_df) > preview_n:
+                with st.expander(f"Show all {len(result_df):,} rows", expanded=False):
+                    render_results_table(result_df, title_col, desc_col)
     else:
         st.markdown("""
         <div style="border:2px dashed #E5E7EB;border-radius:8px;padding:48px;text-align:center;
