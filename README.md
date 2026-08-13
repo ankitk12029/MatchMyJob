@@ -107,4 +107,4 @@ matchmyjob/
 
 ## License
 
-© 2026 Ankit Katre. All rights reserved.
+Released under the [MIT License](LICENSE).
