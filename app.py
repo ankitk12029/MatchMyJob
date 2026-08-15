@@ -3,6 +3,7 @@ app.py — MatchMyJob Interactive Web App
 """
 
 import os
+import sys
 import time
 import numpy as np
 import pandas as pd
@@ -12,6 +13,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 from sentence_transformers import SentenceTransformer, util
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+from scoring import lexical_overlap_boost, conf_color, conf_label
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -324,11 +328,8 @@ def match_batch(titles: list, descriptions: list) -> list:
     results = []
     for i, title in enumerate(titles):
         s = raw[i].copy()
-        words = set(str(title).lower().split())
         for j, kt in enumerate(kb_df["Title"]):
-            overlap = len(words & set(str(kt).lower().split()))
-            if overlap:
-                s[j] += 0.03 * overlap
+            s[j] += lexical_overlap_boost(title, kt)
         top3 = np.argsort(s)[::-1][:3]
         b    = top3[0]
         results.append({
@@ -346,16 +347,6 @@ def match_batch(titles: list, descriptions: list) -> list:
 
 
 # ─── UI HELPERS ───────────────────────────────────────────────────────────────
-
-def conf_color(v):
-    if v >= 72: return "conf-high"
-    if v >= 58: return "conf-mid"
-    return "conf-low"
-
-def conf_label(v):
-    if v >= 65: return "High confidence"
-    if v >= 50: return "Moderate confidence"
-    return "Low confidence"
 
 def soc_group(soc: str) -> str:
     prefix = str(soc)[:2]
