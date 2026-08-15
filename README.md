@@ -1,5 +1,7 @@
 # MatchMyJob
 
+[![CI](https://github.com/ankitk12029/MatchMyJob/actions/workflows/ci.yml/badge.svg)](https://github.com/ankitk12029/MatchMyJob/actions/workflows/ci.yml)
+
 **Automatically map free-text job titles to standardized O\*NET occupation codes.**
 
 MatchMyJob takes a plain-English job title (and optional description) and instantly finds the best matching occupation from the U.S. [O\*NET database](https://www.onetonline.org/) — a government-maintained list of 1,016 standardized job categories with official SOC codes.
