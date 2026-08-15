@@ -3,6 +3,7 @@ app.py — MatchMyJob Interactive Web App
 """
 
 import os
+import sys
 import time
 import numpy as np
 import pandas as pd
@@ -13,6 +14,9 @@ import plotly.graph_objects as go
 from sentence_transformers import SentenceTransformer, util
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+from scoring import lexical_overlap_boost, conf_color, conf_label
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # ─── PATHS & WEIGHTS ──────────────────────────────────────────────────────────
@@ -22,8 +26,9 @@ MODEL_DIR     = ROOT / "models" / "matchmyjob-finetuned"
 BASE_MODEL    = "BAAI/bge-small-en-v1.5"
 BGE_PREFIX    = "Represent this job for retrieval: "
 
-WEIGHTS = {"Tasks": 0.0051, "Description": 0.0700, "Skills": 0.0405,
-           "Ofc_Title": 0.3212, "Alt_Titles": 0.5055, "Tools": 0.0578}
+# Fallback only, used if optimal_weights.csv is missing — data/processed/optimal_weights.csv is authoritative.
+WEIGHTS = {"Tasks": 0.2017, "Description": 0.1021, "Skills": 0.0063,
+           "Ofc_Title": 0.3941, "Alt_Titles": 0.2898, "Tools": 0.0061}
 _wf = ROOT / "data" / "processed" / "optimal_weights.csv"
 if _wf.exists():
     _w = pd.read_csv(_wf).set_index("field")["weight"]
@@ -324,11 +329,8 @@ def match_batch(titles: list, descriptions: list) -> list:
     results = []
     for i, title in enumerate(titles):
         s = raw[i].copy()
-        words = set(str(title).lower().split())
         for j, kt in enumerate(kb_df["Title"]):
-            overlap = len(words & set(str(kt).lower().split()))
-            if overlap:
-                s[j] += 0.03 * overlap
+            s[j] += lexical_overlap_boost(title, kt)
         top3 = np.argsort(s)[::-1][:3]
         b    = top3[0]
         results.append({
@@ -346,16 +348,6 @@ def match_batch(titles: list, descriptions: list) -> list:
 
 
 # ─── UI HELPERS ───────────────────────────────────────────────────────────────
-
-def conf_color(v):
-    if v >= 72: return "conf-high"
-    if v >= 58: return "conf-mid"
-    return "conf-low"
-
-def conf_label(v):
-    if v >= 65: return "High confidence"
-    if v >= 50: return "Moderate confidence"
-    return "Low confidence"
 
 def soc_group(soc: str) -> str:
     prefix = str(soc)[:2]
