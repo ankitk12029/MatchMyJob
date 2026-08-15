@@ -1,6 +1,8 @@
 # Ignore data files
 # data/processed/*
 data/output/*
+!data/output/eval_machine_vs_human.csv
+!data/output/eval_summary.md
 data/raw/*
 
 # Ignore claude files
