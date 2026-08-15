@@ -26,8 +26,9 @@ MODEL_DIR     = ROOT / "models" / "matchmyjob-finetuned"
 BASE_MODEL    = "BAAI/bge-small-en-v1.5"
 BGE_PREFIX    = "Represent this job for retrieval: "
 
-WEIGHTS = {"Tasks": 0.0051, "Description": 0.0700, "Skills": 0.0405,
-           "Ofc_Title": 0.3212, "Alt_Titles": 0.5055, "Tools": 0.0578}
+# Fallback only, used if optimal_weights.csv is missing — data/processed/optimal_weights.csv is authoritative.
+WEIGHTS = {"Tasks": 0.2017, "Description": 0.1021, "Skills": 0.0063,
+           "Ofc_Title": 0.3941, "Alt_Titles": 0.2898, "Tools": 0.0061}
 _wf = ROOT / "data" / "processed" / "optimal_weights.csv"
 if _wf.exists():
     _w = pd.read_csv(_wf).set_index("field")["weight"]
