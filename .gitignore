@@ -8,15 +8,13 @@ data/raw/*
 # Ignore claude files
 .claude/
 
-# Ignore vector files
-vectors/*
+# Vector caches (vectors/*.pt) are tracked so paper claims are verifiable
 
 # Keep the folder structure (git needs at least one file to track a folder)
 !data/raw/.gitkeep
 # !data/processed/.gitkeep
 !data/output/.gitkeep
 !models/.gitkeep
-!vectors/.gitkeep
 
 
 # Ignore Python cache

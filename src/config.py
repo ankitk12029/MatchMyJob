@@ -39,8 +39,9 @@ MATCH_OUTPUT_PATH    = OUTPUT_DIR / "matched_jobs_results.csv"
 # vectorize_kb.py writes these; match_engine.py and match_engine_eval.py read them.
 def vector_cache_path(model_name: str) -> Path:
     """Returns path to the .pt cache bundle for a given model."""
-    safe_name = str(model_name).replace("/", "_").replace("\\", "_").replace(" ", "_")
-    # Use only the last folder name for local paths so the filename stays short
-    safe_name = Path(safe_name).name
+    # Local model directories: use only the last folder name, so the filename
+    # does not embed a machine-specific absolute path.
+    name = Path(model_name).name if Path(str(model_name)).is_absolute() else str(model_name)
+    safe_name = name.replace("/", "_").replace("\\", "_").replace(" ", "_")
     return VECTORS_DIR / f"kb_vectors_{safe_name}.pt"
 
