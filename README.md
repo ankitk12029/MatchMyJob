@@ -12,7 +12,7 @@ MatchMyJob takes a plain-English job title (and optional description) and instan
 
 - **Single lookup** — type a job title and get the top 3 occupation matches with confidence scores
 - **Batch processing** — upload a CSV or Excel file and match thousands of rows in seconds
-- **Confidence scoring** — each match comes with a percentage score (High ≥65% / Moderate 50–64% / Low <50%)
+- **Confidence scoring** — each match comes with a percentage score (High ≥65% / Moderate 50–64.9% / Low <50%)
 - **Interactive charts** — confidence distribution and occupation group breakdown
 - **Downloadable results** — export matched data as CSV
 
@@ -30,11 +30,12 @@ MatchMyJob takes a plain-English job title (and optional description) and instan
 
 | Metric | Score |
 |---|---|
-| Top-1 accuracy | 43% |
-| Top-3 accuracy | 62% |
+| Top-1 accuracy | 41.8% (276 / 661) |
+| Top-3 accuracy | 60.1% (397 / 661) |
+| Major-group (2-digit SOC) accuracy | 73.4% (485 / 661) |
 | Knowledge base | 1,016 O\*NET occupations |
 
-> Human inter-rater reliability on the same task is ~56–61%, making these results competitive with manual coding.
+> Measured on a held-out test split of 661 human-coded job records; see `data/output/eval_summary.md` for the protocol and `data/output/eval_machine_vs_human.csv` for per-row predictions.
 
 ---
 
@@ -104,6 +105,12 @@ matchmyjob/
 | Deep learning | PyTorch |
 | Data | pandas, numpy |
 | Charts | Plotly |
+
+---
+
+## Citation
+
+If you use MatchMyJob, please cite it using [CITATION.cff](CITATION.cff) (GitHub's "Cite this repository" button).
 
 ---
 
