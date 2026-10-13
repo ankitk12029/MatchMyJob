@@ -373,12 +373,13 @@ def render_match_card(rank: int, soc: str, title: str, conf: float):
     </div>
     """, unsafe_allow_html=True)
 
+CONF_HEX = {"conf-high": "#059669", "conf-mid": "#D97706", "conf-low": "#DC2626"}
+
 def render_results_table(result_df: pd.DataFrame, title_col: str, desc_col: str):
-    _conf_hex = {"conf-high": "#059669", "conf-mid": "#D97706", "conf-low": "#DC2626"}
     rows_html = ""
     for _, row in result_df.iterrows():
         conf  = float(row["Confidence_%"])
-        color = _conf_hex[conf_color(conf)]
+        color = CONF_HEX[conf_color(conf)]
         desc_cell = (
             f'<td style="color:#6B7280;font-size:0.875rem;max-width:220px;overflow:hidden;'
             f'text-overflow:ellipsis;white-space:nowrap;padding:10px 8px">'
@@ -534,10 +535,7 @@ def render_batch_charts(result_df: pd.DataFrame, high: int, mid: int, low: int):
                .rename(columns={"mean": "Avg_Conf", "count": "Count"})
                .sort_values("Avg_Conf", ascending=True))
 
-        soc_colors = [
-            "#059669" if v >= 72 else "#D97706" if v >= 58 else "#DC2626"
-            for v in grp["Avg_Conf"]
-        ]
+        soc_colors = [CONF_HEX[conf_color(v)] for v in grp["Avg_Conf"]]
         fig4 = go.Figure(go.Bar(
             y=grp["Major_Group"],
             x=grp["Avg_Conf"].round(1),
