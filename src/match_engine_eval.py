@@ -45,7 +45,6 @@ pd.set_option('display.max_colwidth', None)
 MODEL_NAME       = str(FINETUNED_MODEL_PATH)
 BM25_WEIGHT      = 0.03   # light BM25 hybrid — keyword tie-breaker for close matches
 # Prefix only applies if the model was fine-tuned WITH it (bge-base on Colab).
-# bge-small was trained without prefix — using it at inference hurts −1.1%.
 BGE_QUERY_PREFIX = "Represent this job for retrieval: "
 
 # Default cosine weights (overridden by optimal_weights.csv if present)
