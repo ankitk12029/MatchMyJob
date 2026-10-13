@@ -310,6 +310,8 @@ def print_summary(out_df: pd.DataFrame):
     print(f"  Top-1 correct   : {c1}  ({c1/n*100:.1f}%)")
     print(f"  Top-3 correct   : {c3}  ({c3/n*100:.1f}%)  ← correct SOC in top-3")
     print(f"  Top-3 gap       : {c3 - c1}  rows correct in top-3 but not top-1")
+    major_ok = (sub['Machine_SOC_Code'].str[:2] == sub['Human_SOC_Code'].str[:2]).sum()
+    print(f"  Major-group     : {major_ok}  ({major_ok/n*100:.1f}%)  ← same 2-digit SOC prefix")
     print(f"  Avg confidence  : {sub['Machine_Confidence'].mean():.1f}%")
     print(f"  Conf gap (✓/✗)  : {abs(conf_c - conf_w):.1f}%")
 
