@@ -108,6 +108,12 @@ matchmyjob/
 
 ---
 
+## Data Availability
+
+The six O*NET source files, the knowledge base, the learned field weights, the fine-tuned model, the vector caches and the per-row evaluation output are in this repository. The human-coded training and test spreadsheets (`data/raw/*.xlsx`) are not redistributed here; they are available from the authors on request, so fine-tuning, weight optimization and evaluation cannot be re-run from the repository alone. Prediction and the app run without them.
+
+---
+
 ## Citation
 
 If you use MatchMyJob, please cite it using [CITATION.cff](CITATION.cff) (GitHub's "Cite this repository" button).
