@@ -17,8 +17,8 @@ Matching pipeline: weighted cosine similarity across 6 KB fields (weights from
 word overlap boost. See `src/match_engine_eval.py` for the full pipeline.
 
 Major-group accuracy = the machine's top-1 prediction shares the same 2-digit
-SOC major-group prefix as the human-labeled SOC code (not computed by
-`match_engine_eval.py`'s built-in summary; derived from
+SOC major-group prefix as the human-labeled SOC code (computed by
+`match_engine_eval.py`'s summary and reproducible from
 `eval_machine_vs_human.csv`'s `Machine_SOC_Code` / `Human_SOC_Code` columns).
 
 Raw per-row predictions: [`eval_machine_vs_human.csv`](eval_machine_vs_human.csv).

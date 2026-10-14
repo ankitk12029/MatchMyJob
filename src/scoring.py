@@ -17,8 +17,8 @@ def lexical_overlap_boost(query_title: str, kb_title: str) -> float:
 
 
 def conf_color(v):
-    if v >= 72: return "conf-high"
-    if v >= 58: return "conf-mid"
+    if v >= 65: return "conf-high"
+    if v >= 50: return "conf-mid"
     return "conf-low"
 
 
