@@ -15,7 +15,9 @@ from sentence_transformers import SentenceTransformer, util
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
-from scoring import lexical_overlap_boost, conf_color, conf_label
+from scoring import (conf_color, conf_label, build_bm25_index, lexical_rerank,
+                     title_words)
+from config import vector_cache_path
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -287,50 +289,55 @@ def load_model():
     path = str(MODEL_DIR) if MODEL_DIR.exists() else BASE_MODEL
     return SentenceTransformer(path), path
 
-@st.cache_resource(show_spinner="Indexing 1,016 O*NET occupations…")
+@st.cache_resource(show_spinner="Loading O*NET knowledge base…")
 def load_kb_index():
+    """Knowledge base, cached field vectors, BM25 index and title word sets.
+
+    Uses the same vector cache (built by src/vectorize_kb.py) as the evaluation,
+    so the app scores against exactly the vectors the reported results used.
+    """
     kb_df = pd.read_csv(KB_PATH).fillna("")
-    model, _ = load_model()
-
-    def enc(texts):
-        return model.encode(list(texts), convert_to_tensor=True, show_progress_bar=False)
-    def col(name, cap=None):
-        s = kb_df[name].astype(str) if name in kb_df.columns else pd.Series([""] * len(kb_df))
-        return s.str[:cap].tolist() if cap else s.tolist()
-
-    return kb_df, {
-        "task"      : enc(col("Title")),
-        "desc"      : enc(col("Description",     400)),
-        "skill"     : enc(col("All_Tech_Skills", 300)),
-        "ofc_title" : enc(col("Title")),
-        "alt_title" : enc(col("All_Alt_Titles",  300)),
-        "tool"      : enc(col("All_Tools",       200)),
-    }
+    _, model_path = load_model()
+    cache_path = vector_cache_path(model_path)
+    if not cache_path.exists():
+        raise FileNotFoundError(
+            f"Vector cache not found: {cache_path}. Run: python src/vectorize_kb.py")
+    bundle = torch.load(cache_path, map_location="cpu", weights_only=False)
+    kb_rows = bundle.get("meta", {}).get("kb_rows")
+    if kb_rows is not None and int(kb_rows) != len(kb_df):
+        raise ValueError(
+            f"Vector cache has {kb_rows} rows but the knowledge base has {len(kb_df)}. "
+            "Re-run: python src/vectorize_kb.py")
+    bm25 = build_bm25_index(kb_df)
+    kb_title_words = [title_words(t) for t in kb_df["Title"]]
+    return kb_df, bundle, bm25, kb_title_words
 
 
 # ─── MATCHING LOGIC ───────────────────────────────────────────────────────────
 
 def match_batch(titles: list, descriptions: list) -> list:
-    model, _   = load_model()
-    kb_df, idx = load_kb_index()
+    """Same pipeline as src/match_engine_eval.py: weighted cosine over six cached
+    field vectors + BM25 + title-word boost (see scoring.lexical_rerank)."""
+    model, _                    = load_model()
+    kb_df, vec, bm25, kb_words  = load_kb_index()
 
-    queries = [BGE_PREFIX + f"{t} {d}".strip() for t, d in zip(titles, descriptions)]
-    q_embs  = model.encode(queries, convert_to_tensor=True, show_progress_bar=False)
+    texts   = [f"{t} {d}".strip() for t, d in zip(titles, descriptions)]
+    q_embs  = model.encode([BGE_PREFIX + t for t in texts],
+                           convert_to_tensor=True, show_progress_bar=False).cpu()
 
-    raw = (
-        util.cos_sim(q_embs, idx["task"])      * WEIGHTS["Tasks"]       +
-        util.cos_sim(q_embs, idx["desc"])      * WEIGHTS["Description"] +
-        util.cos_sim(q_embs, idx["skill"])     * WEIGHTS["Skills"]      +
-        util.cos_sim(q_embs, idx["ofc_title"]) * WEIGHTS["Ofc_Title"]   +
-        util.cos_sim(q_embs, idx["alt_title"]) * WEIGHTS["Alt_Titles"]  +
-        util.cos_sim(q_embs, idx["tool"])      * WEIGHTS["Tools"]
-    ).cpu().numpy()
+    cosine = (
+        util.cos_sim(q_embs, vec["task_embeddings"])      * WEIGHTS["Tasks"]       +
+        util.cos_sim(q_embs, vec["desc_embeddings"])      * WEIGHTS["Description"] +
+        util.cos_sim(q_embs, vec["skill_embeddings"])     * WEIGHTS["Skills"]      +
+        util.cos_sim(q_embs, vec["ofc_title_embeddings"]) * WEIGHTS["Ofc_Title"]   +
+        util.cos_sim(q_embs, vec["alt_title_embeddings"]) * WEIGHTS["Alt_Titles"]  +
+        util.cos_sim(q_embs, vec["tool_embeddings"])      * WEIGHTS["Tools"]
+    ).numpy()
+    raw = lexical_rerank(cosine, texts, titles, kb_df, bm25, kb_words)
 
     results = []
     for i, title in enumerate(titles):
-        s = raw[i].copy()
-        for j, kt in enumerate(kb_df["Title"]):
-            s[j] += lexical_overlap_boost(title, kt)
+        s = raw[i]
         top3 = np.argsort(s)[::-1][:3]
         b    = top3[0]
         results.append({

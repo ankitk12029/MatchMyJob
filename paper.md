@@ -14,10 +14,12 @@ authors:
     affiliation: 1
   - name: Justin Wiegand
     orcid: 0000-0001-8151-385X
-    affiliation: 1
+    affiliation: 2
 affiliations:
   - name: San Diego State University, USA
     index: 1
+  - name: Department of Management, Fowler College of Business, San Diego State University, USA
+    index: 2
 date: 12 October 2026
 bibliography: paper.bib
 ---
@@ -44,7 +46,7 @@ We built `MatchMyJob` rather than extend these tools for three reasons. First, n
 
 `MatchMyJob` separates an offline build phase from online inference (\autoref{fig:architecture}).
 
-![System architecture. The offline phase builds the knowledge base, fine-tunes the model, caches the field embeddings, and learns the field weights. The evaluated pipeline (A) and the deployed application (B) share the model and weights but score differently, as described below.\label{fig:architecture}](architecture.png)
+![System architecture. The offline phase builds the knowledge base, fine-tunes the model, caches the field embeddings, and learns the field weights; the deployed application then encodes each query and ranks occupations.\label{fig:architecture}](architecture.png)
 
 **Offline build.** Four scripts run in sequence. `master_data_creation.py` builds a knowledge base of 1,016 occupations from six O\*NET 30.1 source files, with task text weighted by O\*NET importance ratings. `finetune_model.py` fine-tunes `bge-small-en-v1.5` with Multiple Negatives Ranking loss (batch size 64, 3 epochs) on 4,206 pairs, built from 5,260 combined training rows after excluding 1,054 rows whose SOC code is outside the knowledge base; it holds out 20% of the labeled data for testing. `vectorize_kb.py` encodes the six knowledge-base fields, splitting long fields into 800-character chunks and mean-pooling them, and saves the tensors under `vectors/` in a cache named after the model (`kb_vectors_matchmyjob-finetuned.pt`). `optimize_weights.py` runs SciPy's differential evolution over the six weights, maximizing cosine-only top-1 accuracy on the training rows (bounded to $[0,1]$, normalized to sum to one; `maxiter=300`, `popsize=12`, seed 42). Evolution was chosen over gradient-based search because ranking is not differentiable. The learned weights are stored in `data/processed/optimal_weights.csv`: title 39.4%, alternate titles 29.0%, tasks 20.2%, description 10.2%, technology skills 0.6%, tools 0.6%. Skills and tools, which started at 15% and 5%, were driven below 1% each, which plausibly reflects that respondents write short, title-like text rather than task narratives.
 
@@ -56,7 +58,7 @@ $$
 
 where $w_i$ are the learned field weights, $\widehat{\text{BM25}}$ is a BM25 keyword score over the occupation title, alternate titles, and description, normalized by its maximum over occupations, $T(\cdot)$ are the stemmed, stop-word-filtered word sets of the query title and the official occupation title, $\gamma = 0.03$, and $\delta = 0.05$. The two lexical terms act as tie-breakers between occupations whose embeddings are nearly identical.
 
-**Deployed application.** The Streamlit application (`app.py`) offers single-title lookup and batch CSV/Excel upload. It uses the same fine-tuned model, prefix, and learned weights, but a lighter lexical step: it adds 0.03 per word shared between the query title and the occupation title, with no BM25 term, and it encodes its knowledge-base fields when it starts instead of loading the cached tensors. We have not benchmarked this variant separately, so the accuracy figures below describe the evaluated pipeline; `match_engine.py`, a scripted batch path, uses weighted cosine similarity only. Aligning the application with the evaluated pipeline is planned for the next release.
+**Deployed application.** The Streamlit application (`app.py`) offers single-title lookup and batch CSV/Excel upload. It loads the cached knowledge-base vectors and applies the same fine-tuned model, prefix, learned weights, and lexical terms (BM25 and the title-word boost, implemented once in `scoring.py`) as the evaluation, so it returns the same rankings as the evaluated pipeline. The scripted batch path, `match_engine.py`, uses the same scoring.
 
 **Confidence tiers.** The top score, expressed as a percentage, is labeled High ($\geq 65$), Moderate (50--64.9), or Low (< 50). These tiers are heuristic score bands, not calibrated probabilities.
 
