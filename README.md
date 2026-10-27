@@ -83,6 +83,8 @@ matchmyjob/
 │   ├── finetune_model.py           # Fine-tunes the embedding model
 │   ├── vectorize_kb.py             # Pre-computes KB embeddings
 │   ├── optimize_weights.py         # Optimizes field weights
+│   ├── scoring.py                  # Shared scoring: BM25 + title boost, confidence tiers
+│   ├── match_engine.py             # Batch matching of a CSV of job titles
 │   └── match_engine_eval.py        # Evaluation script
 ├── data/
 │   ├── raw/                        # Source O*NET files and training data
@@ -110,7 +112,7 @@ matchmyjob/
 
 ## Data Availability
 
-The six O*NET source files, the knowledge base, the learned field weights, the fine-tuned model, the vector caches and the per-row evaluation output are in this repository. The human-coded training and test spreadsheets (`data/raw/*.xlsx`) are not redistributed here; they are available from the authors on request, so fine-tuning, weight optimization and evaluation cannot be re-run from the repository alone. Prediction and the app run without them.
+The six O*NET source files, the knowledge base, the learned field weights, the fine-tuned model, the vector caches, the per-row evaluation output and a test dataset for running the batch workflow are in this repository. The human-coded training data are not redistributed, because using the software does not require retraining. Fine-tuning and weight optimization therefore cannot be re-run from the repository alone, but prediction and the app run without them.
 
 ---
 
