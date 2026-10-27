@@ -1,5 +1,5 @@
 """
-match_engine.py — MatchMyJob Production Matching Pipeline
+match_engine.py — MatchMyJob Batch Matching Pipeline
 ==========================================================
 Loads pre-computed KB vectors from cache (built by vectorize_kb.py)
 instead of re-encoding on every run.
@@ -19,6 +19,7 @@ import time
 import os
 import json
 from pathlib import Path
+from scoring import build_bm25_index, lexical_rerank
 from config import (
     KB_PATH, MODELS_DIR, FINETUNED_MODEL_PATH,
     USER_INPUT_FILE, MATCH_OUTPUT_PATH, vector_cache_path
@@ -32,6 +33,8 @@ pd.set_option('display.expand_frame_repr', False)
 
 # ─── MODEL ────────────────────────────────────────────────────────────────────
 MODEL_NAME = str(FINETUNED_MODEL_PATH)   # switch to 'all-MiniLM-L6-v2' for baseline
+# Same retrieval instruction used in fine-tuning, the app and the evaluation.
+BGE_QUERY_PREFIX = "Represent this job for retrieval: "
 
 # ─── CATEGORY WEIGHTS (must add up to 1.0) ────────────────────────────────────
 # WEIGHT_TASKS       = 0.45   
@@ -143,25 +146,22 @@ def run_matching_pipeline():
     print(f"\n[3/4] Encoding user queries...")
     model = SentenceTransformer(MODEL_NAME, device='cpu')
     user_texts       = (input_df['User_Job_Title'] + " " + input_df['User_Job_Description']).tolist()
-    query_embeddings = model.encode(user_texts, convert_to_tensor=True, show_progress_bar=True)
+    query_embeddings = model.encode([BGE_QUERY_PREFIX + t for t in user_texts],
+                                    convert_to_tensor=True, show_progress_bar=True)
 
-    # ── 4. Score and rank ─────────────────────────────────────────────────────
+    # ── 4. Score and rank (same pipeline as app.py and match_engine_eval.py) ──
     print(f"\n[4/4] Calculating weighted similarity scores...")
-    task_scores      = util.cos_sim(query_embeddings, task_embeddings)
-    skill_scores     = util.cos_sim(query_embeddings, skill_embeddings)
-    tool_scores      = util.cos_sim(query_embeddings, tool_embeddings)
-    alt_title_scores = util.cos_sim(query_embeddings, alt_title_embeddings)
-    ofc_title_scores = util.cos_sim(query_embeddings, ofc_title_embeddings)
-    desc_scores      = util.cos_sim(query_embeddings, desc_embeddings)
-
-    final_scores = (
-        (task_scores      * WEIGHT_TASKS)       +
-        (desc_scores      * WEIGHT_DESCRIPTION) +
-        (skill_scores     * WEIGHT_SKILLS)      +
-        (ofc_title_scores * WEIGHT_OFC_TITLE)   +
-        (alt_title_scores * WEIGHT_ALT_TITLES)  +
-        (tool_scores      * WEIGHT_TOOLS)
-    )
+    cosine_scores = (
+        (util.cos_sim(query_embeddings, task_embeddings)      * WEIGHT_TASKS)       +
+        (util.cos_sim(query_embeddings, desc_embeddings)      * WEIGHT_DESCRIPTION) +
+        (util.cos_sim(query_embeddings, skill_embeddings)     * WEIGHT_SKILLS)      +
+        (util.cos_sim(query_embeddings, ofc_title_embeddings) * WEIGHT_OFC_TITLE)   +
+        (util.cos_sim(query_embeddings, alt_title_embeddings) * WEIGHT_ALT_TITLES)  +
+        (util.cos_sim(query_embeddings, tool_embeddings)      * WEIGHT_TOOLS)
+    ).cpu().numpy()
+    bm25 = build_bm25_index(kb_df)
+    final_scores = torch.from_numpy(lexical_rerank(
+        cosine_scores, user_texts, input_df['User_Job_Title'].tolist(), kb_df, bm25))
 
     # ── Extract top 3 matches ─────────────────────────────────────────────────
     m1_codes, m1_titles, m1_scores = [], [], []
