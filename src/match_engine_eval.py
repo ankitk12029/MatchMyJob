@@ -14,7 +14,9 @@ Matching strategy (no cross-encoder, no LLM):
             Final score = cosine_score + BM25_WEIGHT * bm25_score (normalized).
 
   Stage 3 — Title word boost
-            +0.03 per overlapping word between survey title and O*NET title.
+            +0.05 per overlapping (stemmed) word between survey title and O*NET title.
+
+Stages 2-3 live in scoring.py (lexical_rerank), shared with app.py and match_engine.py.
 
 Metrics reported:
   Top-1: machine's #1 prediction exactly matches human SOC code
@@ -32,6 +34,7 @@ from pathlib import Path
 from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer, util
 
+from scoring import BM25_WEIGHT, build_bm25_index, lexical_rerank
 from config import (
     KB_PATH, FINETUNED_MODEL_PATH,
     GT_TEST_SPLIT_S3_PATH, EVAL_OUTPUT_PATH,
@@ -43,7 +46,6 @@ pd.set_option('display.max_colwidth', None)
 
 # ─── CONFIG ───────────────────────────────────────────────────────────────────
 MODEL_NAME       = str(FINETUNED_MODEL_PATH)
-BM25_WEIGHT      = 0.03   # light BM25 hybrid — keyword tie-breaker for close matches
 # Prefix only applies if the model was fine-tuned WITH it (bge-base on Colab).
 BGE_QUERY_PREFIX = "Represent this job for retrieval: "
 
@@ -152,66 +154,6 @@ def load_test_split() -> pd.DataFrame:
     return df
 
 
-# ─── BM25 INDEX ───────────────────────────────────────────────────────────────
-
-def build_bm25_index(kb_df: pd.DataFrame) -> BM25Okapi:
-    """
-    Tokenises O*NET title + alt-titles + description for each occupation.
-    BM25 is a pure keyword scorer — fast, no model required.
-    """
-    corpus = []
-    for _, row in kb_df.iterrows():
-        doc = " ".join(filter(None, [
-            str(row.get('Title', '')),
-            str(row.get('All_Alt_Titles', ''))[:200],
-            str(row.get('Description', ''))[:300],
-        ]))
-        corpus.append(doc.lower().split())
-    return BM25Okapi(corpus)
-
-
-def bm25_scores_for_query(bm25: BM25Okapi, query: str) -> np.ndarray:
-    tokens = query.lower().split()
-    scores = np.array(bm25.get_scores(tokens), dtype=np.float32)
-    # Normalize to [0, 1] so it's on the same scale as cosine sim
-    max_s  = scores.max()
-    if max_s > 0:
-        scores = scores / max_s
-    return scores
-
-
-# ─── TITLE BOOST ──────────────────────────────────────────────────────────────
-
-_STOP_WORDS = {
-    'and', 'or', 'the', 'of', 'a', 'in', 'for', 'to', 'at', 'by', 'an',
-    'is', 'as', 'on', 'except', 'special', 'all', 'other', 'with', 'from',
-}
-
-def _stem(w: str) -> str:
-    """Strip common English plural/agent suffixes for fuzzy title matching."""
-    if len(w) > 5 and w.endswith('ers'):
-        return w[:-2]   # supervisors → supervisor, workers → worker
-    if len(w) > 3 and w.endswith('s'):
-        return w[:-1]   # analysts → analyst, nurses → nurse
-    return w
-
-def _title_words(title: str) -> set:
-    return {_stem(w) for w in title.lower().split()
-            if w not in _STOP_WORDS and len(w) > 1}
-
-def apply_title_boost(survey_title: str, kb_df: pd.DataFrame,
-                      scores: np.ndarray, boost: float = 0.03) -> np.ndarray:
-    survey_words = _title_words(survey_title)
-    if not survey_words:
-        return scores
-    boosted = scores.copy()
-    for idx, kb_title in enumerate(kb_df['Title']):
-        overlap = len(survey_words & _title_words(str(kb_title)))
-        if overlap >= 1:
-            boosted[idx] += boost * overlap
-    return boosted
-
-
 # ─── MATCHING ─────────────────────────────────────────────────────────────────
 
 def run_matching(model, bm25: BM25Okapi, bundle: dict,
@@ -231,15 +173,13 @@ def run_matching(model, bm25: BM25Okapi, bundle: dict,
         util.cos_sim(query_embs, bundle['tool_embeddings'])      * WEIGHT_TOOLS
     ).cpu().numpy()   # shape: (n_queries, n_kb)
 
+    # Stages 2-3: BM25 hybrid score + title word boost (shared with app.py)
+    final_scores = lexical_rerank(cosine_scores, texts, survey_titles, kb_df, bm25)
+
     soc_codes, titles, confidences, top3_socs_list = [], [], [], []
 
     for i in range(len(texts)):
-        # Stage 2: add BM25 hybrid score
-        bm25_s  = bm25_scores_for_query(bm25, texts[i])
-        final_s = cosine_scores[i] + BM25_WEIGHT * bm25_s
-
-        # Stage 3: title word boost
-        final_s = apply_title_boost(survey_titles[i], kb_df, final_s, boost=0.05)
+        final_s = final_scores[i]
 
         top3_idx = np.argsort(final_s)[::-1][:3].tolist()
         top3_socs_list.append([kb_df.iloc[idx]['O*NET-SOC Code'] for idx in top3_idx])
