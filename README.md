@@ -112,7 +112,7 @@ matchmyjob/
 
 ## Data Availability
 
-The six O*NET source files, the knowledge base, the learned field weights, the fine-tuned model, the vector caches, the per-row evaluation output and a test dataset for running the batch workflow are in this repository. The human-coded training data are not redistributed, because using the software does not require retraining. Fine-tuning and weight optimization therefore cannot be re-run from the repository alone, but prediction and the app run without them.
+The six O*NET source files, the knowledge base, the learned field weights, the fine-tuned model, the vector caches, the per-row evaluation output and a test dataset for running the batch workflow (`data/test/heldout_test_input.csv`: 292 held-out records whose job titles never appear in the training data, with `Expected_SOC` and `Expected_Title` labels) are in this repository. The human-coded training data are not redistributed, because using the software does not require retraining. Fine-tuning and weight optimization therefore cannot be re-run from the repository alone, but prediction and the app run without them.
 
 ---
 
