@@ -112,7 +112,36 @@ matchmyjob/
 
 ## Data Availability
 
-The six O*NET source files, the knowledge base, the learned field weights, the fine-tuned model, the vector caches, the per-row evaluation output and a test dataset for running the batch workflow (`data/test/heldout_test_input.csv`: 292 held-out records whose job titles never appear in the training data, with `Expected_SOC` and `Expected_Title` labels) are in this repository. The human-coded training data are not redistributed, because using the software does not require retraining. Fine-tuning and weight optimization therefore cannot be re-run from the repository alone, but prediction and the app run without them.
+The six O*NET source files, the knowledge base, the learned field weights, the fine-tuned model, the vector caches, the per-row evaluation output and a test dataset for running the batch workflow (`data/test/heldout_test_input.csv`: 292 held-out records whose job titles never appear in the training data, with `Expected_SOC` and `Expected_Title` labels) are in this repository. The de-identified training data (`data/train/training_data.csv`) are also included; see [Training data](#training-data) below. The original spreadsheets with the full, unredacted records are not redistributed. The held-out test split is the 20% of the primary dataset that fine-tuning set aside (661 records; the 292-record subset above is published), so the training and test records do not overlap.
+
+---
+
+## Training data
+
+`data/train/training_data.csv` contains the 5,259 records used to fine-tune the embedding model: 2,640 survey responses with a free-text job title and job description, and 2,619 title-only records (empty description). Each record has a human-assigned O*NET-SOC code.
+
+| Column | Content |
+|---|---|
+| `Job Title` | Respondent's free-text job title |
+| `Job Description` | Respondent's free-text description of their duties (empty for title-only records) |
+| `O*NET-SOC Code` | O*NET-SOC 2019 code assigned by a human coder |
+
+**Source.** Free-text job titles and descriptions from survey respondents, matched to O\*NET-SOC codes by human raters. This is the training set that `src/finetune_model.py` builds from `master_training_data.xlsx` (primary records, 80% after the seeded split) and `training_data_without_descrption.xlsx` (title-only records, two or more words). The held-out 20% split is excluded.
+
+**De-identification steps.**
+1. Kept only the three columns above. The source sheets hold nothing else per record except the O\*NET occupation title, which was dropped as redundant with the code.
+2. Replaced e-mail addresses, web addresses and domain names, phone numbers, SSN-like numbers and `@` handles with `[REDACTED]`. Only two domain names were found, both in one record.
+3. Replaced employer, brand and institution names that a manual review of the text found with `[ORG]`, and one personal first name with `[NAME]`. This covered 46 records, for example fast-food chains, retailers, a city government, and a few named agencies and research groups. Widely known regulators and software products named as part of the duties (for example FDA, IRS, Microsoft Word) were kept.
+4. Removed one record whose description was a political statement rather than a job description.
+5. Spot-checked a random sample of rows and a scan of every unusual capitalised word in the text.
+
+This is a best-effort process, not a guarantee. The text is free-form, so a missed identifier is possible; please report one by opening an issue.
+
+**Data notes.**
+- Text is otherwise unchanged, including the respondents' spelling errors.
+- About 146 title-only records have the letters "na" missing from a word (for example "Mager" for "Manager", "Alyst" for "Analyst"). This is damage in the source spreadsheet and is left as-is, because it is what the model trained on.
+- Two O\*NET-SOC codes carried a stray `+I544` suffix in the source and were cleaned to `31-1014.00`.
+- The paper reports 5,260 training rows; this file has 5,259 because of step 4.
 
 ---
 
