@@ -141,7 +141,6 @@ This is a best-effort process, not a guarantee. The text is free-form, so a miss
 - Text is otherwise unchanged, including the respondents' spelling errors.
 - About 146 title-only records have the letters "na" missing from a word (for example "Mager" for "Manager", "Alyst" for "Analyst"). This is damage in the source spreadsheet and is left as-is, because it is what the model trained on.
 - Two O\*NET-SOC codes carried a stray `+I544` suffix in the source and were cleaned to `31-1014.00`.
-- The paper reports 5,260 training rows; this file has 5,259 because of step 4.
 
 ---
 
