@@ -1,6 +1,7 @@
 # MatchMyJob
 
 [![CI](https://github.com/ankitk12029/MatchMyJob/actions/workflows/ci.yml/badge.svg)](https://github.com/ankitk12029/MatchMyJob/actions/workflows/ci.yml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24111664.svg)](https://doi.org/10.5281/zenodo.24111664)
 
 **Automatically map free-text job titles to standardized O\*NET occupation codes.**
 
