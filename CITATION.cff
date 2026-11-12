@@ -12,3 +12,12 @@ authors:
 license: MIT
 repository-code: "https://github.com/ankitk12029/MatchMyJob"
 url: "https://matchmyjob.streamlit.app"
+version: 1.0.0
+date-released: 2026-11-10
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.24111664
+    description: Concept DOI (always resolves to the latest version)
+  - type: doi
+    value: 10.5281/zenodo.24111665
+    description: Zenodo archive of v1.0.0

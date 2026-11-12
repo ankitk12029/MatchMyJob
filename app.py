@@ -912,11 +912,11 @@ st.markdown("""
             border-radius:8px;font-size:0.78rem;color:#6B7280;line-height:1.7">
   <span style="font-weight:600;color:#374151;text-transform:uppercase;
                letter-spacing:0.06em;font-size:0.7rem">How to cite</span><br>
-  Katre, A. C., Wiegand J. P. (2026). <em>MatchMyJob: An NLP pipeline for automated O*NET-SOC coding
-  of survey employment data</em> (Version 1.0.0). OSF.
-  <a href="https://doi.org/10.17605/OSF.IO/AZB6U" target="_blank"
+  Katre, A. C., &amp; Wiegand, J. P. (2026). <em>MatchMyJob: An open-source O*NET-SOC autocoder
+  using fine-tuned sentence embeddings and field-weighted retrieval</em> (Version 1.0.0) [Software]. Zenodo.
+  <a href="https://doi.org/10.5281/zenodo.24111664" target="_blank"
      style="color:#A6192E;text-decoration:none;font-weight:500">
-    https://doi.org/10.17605/OSF.IO/AZB6U
+    https://doi.org/10.5281/zenodo.24111664
   </a>
 </div>
 """, unsafe_allow_html=True)
