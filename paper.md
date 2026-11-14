@@ -12,7 +12,7 @@ authors:
     orcid: 0009-0009-1406-4906
     corresponding: true
     affiliation: 1
-  - name: Justin Wiegand
+  - name: Justin P. Wiegand
     orcid: 0000-0001-8151-385X
     affiliation: 2
 affiliations:
@@ -38,7 +38,7 @@ Existing automated tools have limitations. Some are closed-source: SOCcer [Stand
 
 Rule-based and dictionary systems such as NIOCCS agree well with investigators at coarse levels but degrade at finer ones [$\kappa = 0.84$ at 2 digits, 0.56--0.70 at 4 digits, @Schmitz2016]. An independent evaluation on two epidemiological cohorts found the same pattern for NIOCCS and for SOCcer v1 [@BucknerPetty2019]. Stacked ensembles such as SOCcer v2 improved agreement with expert codes to 73% at 2 digits and 50% at 6 digits [@Russ2023] but remain closed-source. A comparison of seven machine-learning algorithms found the best matched human coders about 56% of the time on German survey data [@Schierholz2021].
 
-The O\*NET-SOC AutoCoder, developed by R.M. Wilson Consulting and licensed to state workforce agencies, targets the same taxonomy as `MatchMyJob`. It is closed-source and dictionary-driven, and its accuracy figures are vendor-published [@AutoCoder2020]. Recent transformer-based work includes OccCANINE, a character-level transformer reaching 96% accuracy on historical HISCO codes with 15.8 million training pairs [@Dahl2024]; OPERAS, which exceeds human coders on ISCO-88 [@Hodzic2023]; and a BERT-ensemble classifier for UK SOC and O\*NET-SOC [@RonyPatman2025].
+The O\*NET-SOC AutoCoder, developed by R.M. Wilson Consulting and licensed to state workforce agencies, targets the same taxonomy as `MatchMyJob`. It is closed-source and dictionary-driven, and its accuracy figures are vendor-published [@AutoCoder2020]. Recent transformer-based work includes OccCANINE, a character-level transformer reaching 96% accuracy on historical HISCO codes with 15.8 million training pairs [@Dahl2024]; OPERAS, which exceeds human coders on several occupational taxonomies including ISCO-88 [@Langezaal2023]; and a BERT-ensemble classifier for UK SOC and O\*NET-SOC [@RonyPatman2025].
 
 We built `MatchMyJob` rather than extend these tools for three reasons. First, no open-source system targets the full 1,016-code O\*NET-SOC 2019 taxonomy used in U.S. workforce research; SOCcer covers SOC-2010. Second, `MatchMyJob` learns explicit per-field weights across all six O\*NET descriptor fields, an interpretable decomposition absent from systems that encode all occupational text as one vector, such as JobBERT [@Decorte2021] and OccCANINE. Third, the `MatchMyJob` repository contains the knowledge-base construction, fine-tuning, weight-optimization, and evaluation code together with the model, weights, and vector caches. Taken together, these choices make `MatchMyJob` a reusable foundation for O*NET-SOC coding that other researchers can inspect, reproduce, and extend.
 
